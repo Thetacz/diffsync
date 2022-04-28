@@ -78,6 +78,13 @@ class DiffSyncModel(BaseModel):
     Note: inclusion in `_children` is mutually exclusive from inclusion in `_identifiers` or `_attributes`.
     """
 
+    _parent: "DiffSyncModel" = None
+    """Optional: link to parent instance of DiffSyncModel class.
+
+    When child of DiffSyncModel class is added, this field is set to the DiffSyncModel.
+    This allows to travel both ways if needed, for example to access parent data directly.
+    """
+
     model_flags: DiffSyncModelFlags = DiffSyncModelFlags.NONE
     """Optional: any non-default behavioral flags for this DiffSyncModel.
 
@@ -369,6 +376,7 @@ class DiffSyncModel(BaseModel):
         childs = getattr(self, attr_name)
         if child.get_unique_id() in childs:
             raise ObjectAlreadyExists(f"Already storing a {child_type} with unique_id {child.get_unique_id()}", child)
+        setattr(child, "_parent", self)
         childs.append(child.get_unique_id())
 
     def remove_child(self, child: "DiffSyncModel"):
@@ -392,6 +400,7 @@ class DiffSyncModel(BaseModel):
         childs = getattr(self, attr_name)
         if child.get_unique_id() not in childs:
             raise ObjectNotFound(f"{child} was not found as a child in {attr_name}")
+        setattr(child, "_parent", None)
         childs.remove(child.get_unique_id())
 
 
